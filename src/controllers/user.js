@@ -1,5 +1,6 @@
 const { User } = require('../models/userModel');
 
+
 exports.fetchUserById = async (req, res) => {
     const { id } = req.user;
     console.log(id)

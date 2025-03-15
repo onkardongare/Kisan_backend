@@ -24,7 +24,7 @@ const fieldSchema = new mongoose.Schema({
       required: true,
     },
   },
-  cropType: {
+  crop: {
     type: String,
     required: true,
   },

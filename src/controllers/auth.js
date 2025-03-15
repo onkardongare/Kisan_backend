@@ -2,6 +2,30 @@ const { User } = require('../models/userModel');
 const crypto = require('crypto');
 const { sanitizeUser } = require('../utils/common');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
+
+async function getCoordinates(location) {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`;
+
+    try {
+        const response = await axios.get(url, {
+            headers: {
+                "User-Agent": "YourAppName/1.0 (your@email.com)" // Change this to your app name
+            }
+        });
+
+        if (response.data.length > 0) {
+            return {
+                latitude: response.data[0].lat,
+                longitude: response.data[0].lon
+            };
+        } else {
+            return { error: "Location not found" };
+        }
+    } catch (error) {
+        return { error: "Error fetching data", details: error.message };
+    }
+}
 
 exports.createUser = async (req, res) => {
     try {
@@ -26,17 +50,26 @@ exports.createUser = async (req, res) => {
                 }
 
                 // Save the new user with hashed password and salt
-                console.log('req.body',req.body)
-                const user = new User({ ...req.body, password: hashedPassword.toString('hex'), salt });
+                const searchString = `${req.body.village},${req.body.taluka},${req.body.state}`;
+
+                //`await` the `getCoordinates` function
+                const location = await getCoordinates(searchString);
+
+                if (location.error) {
+                    return res.status(400).json({ message: "Location not found" });
+                }                
+                const user = new User({ ...req.body, location, password: hashedPassword.toString('hex'), salt });
                 const doc = await user.save();
 
                 // Create a JWT token after successfully creating the user
                 const token = jwt.sign(sanitizeUser(doc), process.env.SECRET_KEY, { expiresIn: '1h' });
 
+                 // ✅ Remove password & salt from the response
+                 const { password, salt: _, ...safeUser } = doc.toObject();
+
                 // Send the JWT token back in the response
                 res.status(201).json({
-                    id: doc.id,
-                    role: doc.role,
+                    user:safeUser,
                     token,  // Send the JWT token
                 });
             }

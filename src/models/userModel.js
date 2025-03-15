@@ -3,13 +3,17 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema({
   userName: { type: String},
-  role: { type: String, enum: ['user', 'admin']},
+  // role: { type: String, enum: ['user', 'admin']},
   email: { type: String, required: true},
+  mobile: {type: String, required: true},
   password: { type:String, required: true},
+  village:{ type: String },
+  taluka:{ type: String},
+  pinCode:{type: Number},
+  state:{ type: String},
   location: {
     latitude: { type: Number, required: true},
     longitude: { type: Number, required: true},
-    address: { type: String, required: true},
   },
   salt: Buffer,
 
